@@ -164,30 +164,22 @@ python skills/scripts/ghidra_headless.py list_projects
 ```
 报错`FileNotFoundError: analyzeHeadless not found` → 未配置`GHIDRA_HOME`环境变量。
 
-## 4. 注册为Codex MCP技能
-### 4.1 Codex Desktop图形界面配置（STDIO模式）
-| 配置项 | 填写内容示例 |
-|--------|-------------|
-| MCP服务名称 | headless_reverser |
-| 传输模式 | STDIO |
-| 启动命令 | C:\Python314\python.exe（本地完整Python路径） |
-| 参数 | skills/scripts/ghidra_headless.py |
-| 工作目录 | E:\HeadlessReverser\tool |
-| 环境变量 | GHIDRA_HOME=E:\ghidra_11.2_PUBLIC<br>GHIDRA_TIMEOUT=300 |
+## 4. 注册为 Codex Skill（非 MCP）
+> **本项目不是 MCP Server。** 脚本是普通 CLI 工具（接收命令行参数、输出 JSON、退出），不实现 MCP 协议。正确的使用方式是作为 Codex Skill 加载。
 
-### 4.2 config.toml 完整MCP配置模板
-```toml
-[mcp_servers.headless_reverser]
-type = "stdio"
-command = "C:\\Python314\\python.exe"
-args = ["E:\\HeadlessReverser\\tool\\skills\\scripts\\ghidra_headless.py"]
-env = { GHIDRA_HOME = "E:\\ghidra_11.2_PUBLIC", GHIDRA_TIMEOUT = "300" }
-enabled = true
-startup_timeout_ms = 120000
+将工作目录下的 `CODEX.md` 注册为 Codex 的 skill 入口。AI 读取该文档后，会按其中定义的工作流直接通过 shell 调用脚本：
+
+```
+用户："分析这个 target.exe"
+   ↓
+AI 加载 CODEX.md skill → 读到分析工作流
+   ↓
+AI 执行 shell 命令：cd tool; python skills/scripts/ghidra_headless.py summary target.exe
+   ↓
+拿到 JSON → 继续反编译 → 输出 Logic Report
 ```
 
-### 4.3 AI工作流入口
-部署完成后读取工作目录下`CODEX.md`，文档内置标准化逆向流程、报告输出模板，Codex可自动串联多步分析命令完成完整逆向。
+没有 MCP 协议参与，就是普通的"AI 读 skill 文档 → 调命令行工具"。
 
 ---
 
