@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.ghidra-projects/
+*.gpr
+*.rep
+*.lock
+*.lock~
+.env
