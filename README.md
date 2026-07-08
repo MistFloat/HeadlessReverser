@@ -1,8 +1,8 @@
 # HeadlessReverser
-> 无需打开 Ghidra GUI，让 Codex 直接分析二进制文件
+> 无需打开 Ghidra GUI，让 Codex 直接分析二进制文件，适合于只需要简单地了解某个文件中的某一个功能是如何实现的。
 
 无GUI无头Ghidra逆向工具链，专为OpenAI Codex、AI编程助手设计。
-全程命令行输出标准化JSON，无需启动图形界面即可完成二进制静态分析，内置缓存加速重复解析，原生支持接入MCP作为AI逆向技能集。
+全程命令行输出标准化JSON，无需启动图形界面即可完成二进制静态分析。
 
 ## 适用场景
 - Codex/Copilot自然语言自动逆向PE/ELF/Mach-O/固件

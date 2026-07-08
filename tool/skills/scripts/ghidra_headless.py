@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """Unified Ghidra analyzeHeadless wrapper.
 
 Wraps Ghidra headless Java scripts into a single Python interface. Finds
@@ -19,7 +19,7 @@ import glob, hashlib, json, os, re, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent.parent.parent / "ghidra" / "scripts"
-PROJECTS_DIR = Path(os.environ.get("GHIDRA_PROJECTS", str(Path.home() / ".ghidra-projects"))).expanduser()
+PROJECTS_DIR = Path(os.environ.get("GHIDRA_PROJECTS", str(Path.home() / "ghidra-projects"))).expanduser()
 GHIDRA_HOME = Path(os.environ.get("GHIDRA_HOME", "")).expanduser()
 TIMEOUT = int(os.environ.get("GHIDRA_TIMEOUT", "300"))
 
@@ -50,7 +50,7 @@ def find_analyze_headless():
             if os.path.isfile(p):
                 return ["cmd.exe","/c",p] if ext in (".bat",".cmd") else [p]
     for root in ["/opt/homebrew/Cellar/ghidra", "/usr/local/Cellar/ghidra",
-                 "/opt/ghidra", "/usr/share/ghidra", "C:\\tools\\ghidra",
+                 "/opt/ghidra", "/usr/share/ghidra", "C:\\tools\\ghidra", "E:\\ghidra_12.1.2_PUBLIC_20260605\\ghidra_12.1.2_PUBLIC",
                  os.path.expanduser("~\\tools\\ghidra")]:
         pat = os.path.join(root, "**", "support", "analyzeHeadless*")
         for f in glob.glob(pat, recursive=True):
@@ -68,7 +68,11 @@ def run_headless(cmd, project):
     try:
         r = subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=TIMEOUT, shell=s)
         if r.returncode != 0:
-            return {"error": r.stderr.strip() or r.stdout.strip(), "_project": project}
+            err = r.stderr.strip()
+            # Java Unsafe WARNINGs are not real errors
+            if err and not any(kw in err for kw in ["ERROR","Exception","Error","FATAL","NullPointer","NoClassDef","not found"]):
+                return r
+            return {"error": err or r.stdout.strip(), "_project": project}
         return r
     except subprocess.TimeoutExpired:
         return {"error": f"timeout after {TIMEOUT}s", "_project": project}
@@ -95,7 +99,7 @@ def ghidra(command, binary_path, *args):
         j_args = [str(out), "string_refs", str(args[0]), str(args[1] if len(args)>1 else 100)]
     else: j_args = [str(out)]
 
-    cmd = (analyze if isinstance(analyze,list) else [analyze]) + [str(PROJECTS_DIR), proj] + target + ["-scriptPath", str(SCRIPT_DIR), "-postScript", str(script)] + j_args
+    cmd = (analyze if isinstance(analyze,list) else [analyze]) + [str(PROJECTS_DIR), proj] + target + ["-scriptPath", str(SCRIPT_DIR), "-postScript", SCRIPTS[command]] + j_args
     log(cmd)
     r = run_headless(cmd, proj)
     if isinstance(r, dict):
@@ -109,7 +113,10 @@ def ghidra(command, binary_path, *args):
         if isinstance(r, dict): return r
     if not out.exists():
         return {"error": "no output from Ghidra script", "_project": proj}
-    result = json.loads(out.read_text())
+    raw = out.read_text()
+    # Strip any control chars Java q() missed
+    raw = ''.join(c if c >= ' ' or c in '\n\r\t' else '' for c in raw)
+    result = json.loads(raw)
     result["_project"] = proj
     shutil.rmtree(out_dir, ignore_errors=True)
     return result
@@ -138,3 +145,7 @@ def main():
     if cmd in SCRIPTS: print(json.dumps(ghidra(cmd, binary, *sys.argv[3:]), indent=2)); return
     print(json.dumps({"error": f"unknown command: {cmd}. Available: {list(SCRIPTS.keys())} + list_projects + delete_project"}, indent=2))
 if __name__ == "__main__": main()
+
+
+
+

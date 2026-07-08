@@ -26,3 +26,4 @@ public class xrefs_to extends GhidraScript {
     }
     String q(String s) { return s==null?"null":"\""+s.replace("\\","\\\\").replace("\"","\\\"").replace("\n","\\n")+"\""; }
 }
+
